@@ -1,36 +1,14 @@
 <?php
-$host = " sql304.infinityfree.com"; 
-$dbname = "if0_37868054_workflow";
-$username = "if0_37868054"; 
-$password = "81haP9pwLpvURfG"; 
+    session_start(); 
 
-$message = "";
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $email = $_POST['email'];
-        $password = $_POST['password'];
-
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email AND password = :password");
-        $stmt->execute([
-            ':email' => $email,
-            ':password' => $password, 
-        ]);
-
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user) {
-            $message = "Login successful! Welcome, " . htmlspecialchars($user['name']) . ".";
-        } else {
-            $message = "Invalid email or password.";
-        }
-    }
-} catch (PDOException $e) {
-    $message = "Error connecting to the database: " . $e->getMessage();
+//cek error
+if (isset($_SESSION['login_error'])) {
+    $message = $_SESSION['login_error']; // store msg
+    unset($_SESSION['login_error']); // clear msg
+} else {
+    $message = '';
 }
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -44,7 +22,7 @@ try {
             padding: 0;
             font-family: Arial, sans-serif;
             height: 100%;
-            background: url('edubg.jpg') no-repeat center center fixed;
+            background: url('https://designinglighting.com/wp-content/uploads/2021/01/Hoover-HS-3.jpg') no-repeat center center fixed;
             background-size: cover;
             display: flex;
             justify-content: center;
@@ -57,8 +35,7 @@ try {
             border-radius: 20px;
             box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 600px;
-            width: 100%;
+            width: 500px;
             color: #333;
             animation: fadeIn 1.5s ease-in-out;
         }
@@ -137,11 +114,13 @@ try {
             color: red;
         }
     </style>
+    <!-- Add reCAPTCHA script -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LezwJgqAAAAACMJ86UNBUbYsbDpVuCFaiER4yfv"></script>
 </head>
 <body>
     <div class="login-container">
         <h2>Login</h2>
-        <form method="POST" action="">
+        <form method="POST" action="../controllers/process_login.php" id="loginForm">
             <div class="input-group">
                 <label for="email">Email:</label>
                 <input type="email" name="email" required>
@@ -150,11 +129,23 @@ try {
                 <label for="password">Password:</label>
                 <input type="password" name="password" required>
             </div>
+            <!-- This is where the reCAPTCHA token will be added -->
+            <input type="hidden" name="recaptcha_token" id="recaptcha_token">
             <button type="submit">Login</button>
         </form>
         <?php if (!empty($message)): ?>
             <div class="message"><?php echo $message; ?></div>
         <?php endif; ?>
     </div>
+
+    <script>
+        // When the page loads, execute reCAPTCHA and populate the token
+        grecaptcha.ready(function() {
+            grecaptcha.execute('6LezwJgqAAAAACMJ86UNBUbYsbDpVuCFaiER4yfv', { action: 'login' }).then(function(token) {
+                // Add the token to the hidden input
+                document.getElementById('recaptcha_token').value = token;
+            });
+        });
+    </script>
 </body>
 </html>
